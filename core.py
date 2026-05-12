@@ -495,14 +495,16 @@ async def save_post(
     if sr_data.get("salary"):
         payload["salary_range"] = {"text": sr_data["salary"]}
     
-    # Upload PDF to Telegram storage
+    # Upload PDF to Telegram storage — only store Telegram URL, never third-party URLs
     pdf_urls = []
     if sr_data.get("pdf_url"):
-        pdf_urls.append(sr_data["pdf_url"])
         tg_url = await upload_to_telegram(sr_data["pdf_url"], f"📄 {title[:200]}", client)
         if tg_url:
-            pdf_urls.append(tg_url)
+            pdf_urls.append(tg_url)  # Only Telegram URL — permanent and reliable
             logger.info(f"PDF uploaded to Telegram: {title[:50]}")
+        else:
+            logger.warning(f"PDF upload to Telegram failed, skipping: {title[:50]}")
+            # Don't store the third-party URL — it can break anytime
     
     if pdf_urls:
         payload["pdf_urls"] = pdf_urls
