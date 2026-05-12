@@ -260,7 +260,12 @@ def parse_sarkari_result_detail(html: str, url: str) -> dict:
                     if not href or "sarkariresult.com" in href:
                         continue
                     if not href.startswith("http"):
-                        href = "https:" + href if href.startswith("//") else href
+                        if href.startswith("//"):
+                            href = "https:" + href
+                        elif href.startswith("/"):
+                            href = "https://www.sarkariresult.com" + href
+                        else:
+                            continue
                     
                     if "apply online" in label:
                         data["apply_url"] = href
@@ -328,6 +333,12 @@ async def upload_to_telegram(file_url: str, caption: str, client: httpx.AsyncCli
         return None
     
     try:
+        # Fix relative URLs
+        if file_url.startswith('/'):
+            file_url = 'https://www.sarkariresult.com' + file_url
+        elif not file_url.startswith('http'):
+            file_url = 'https://' + file_url
+        
         # Download the file
         resp = await client.get(file_url, headers=get_headers(), timeout=60, follow_redirects=True)
         if resp.status_code != 200:
